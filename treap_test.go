@@ -2,10 +2,11 @@ package treap
 
 import (
 	"bytes"
-	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const alpha = "abcdefghijklmnopqrstuvwxyz"
@@ -1702,4 +1703,26 @@ func hasTreapProperties(root *node) bool {
 	return isValid &&
 		hasTreapProperties(root.left) &&
 		hasTreapProperties(root.right)
+}
+
+// https://dave.cheney.net/2013/06/30/how-to-write-benchmarks-in-go
+var searchBenchmarkResult bool
+
+func BenchmarkSearchWithoutAccessOptimization(b *testing.B) {
+	benchmarkSearch(b, NewTreap())
+}
+func BenchmarkSearchWithAccessOptimization(b *testing.B) {
+	benchmarkSearch(b, NewTreap(FrequentAccessOptimizationOp))
+}
+
+func benchmarkSearch(b *testing.B, trp *Treap) {
+	fillTree(trp, 10000)
+	randValue := string(alpha[rand.Int()%len(alpha)])
+	trp.Insert(randValue)
+	var res bool
+	for i := 0; i < b.N; i++ {
+		res = trp.Search(randValue)
+	}
+	searchBenchmarkResult = res
+
 }
