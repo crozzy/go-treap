@@ -19,7 +19,8 @@ const (
 
 // Treap is a balanced binary search tree.
 type Treap struct {
-	root *node
+	root                       *node
+	frequentAccessOptimization bool
 }
 
 // node represents a value and its priority in a Treap.
@@ -31,8 +32,22 @@ type node struct {
 }
 
 // NewTreap returns a new Treap.
-func NewTreap() *Treap {
-	return &Treap{}
+func NewTreap(ops ...Op) *Treap {
+	t := &Treap{}
+	for _, o := range ops {
+		t = o(t)
+	}
+	return t
+}
+
+// Op is an options func used to configure a Treap instance
+type Op func(t *Treap) *Treap
+
+// FrequentAccessOptimizationOp configures a Treap instance to
+// use frequent assess optimization
+func FrequentAccessOptimizationOp(t *Treap) *Treap {
+	t.frequentAccessOptimization = true
+	return t
 }
 
 // Search returns true if the given value is in the Treap.
@@ -42,7 +57,19 @@ func (t *Treap) Search(value string) bool {
 		return false
 	}
 
-	return binarySearch(t.root, value) != nil
+	node := binarySearch(t.root, value)
+	if node == nil {
+		return false
+	}
+
+	if t.frequentAccessOptimization {
+		newPriority := rand.Int63n(maxPriority-minPriority) + minPriority
+		if newPriority > node.priority {
+			delete(node, value)
+			insert(node, value, newPriority)
+		}
+	}
+	return true
 }
 
 // Insert inserts the given value into the Treap.
